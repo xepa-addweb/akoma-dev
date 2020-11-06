@@ -12,12 +12,22 @@ class SidebarContent extends Component {
 
     constructor(props) {
         super(props);
+        // console.log('AUTH DATA Constructor')
+        // console.log(localStorage.getItem("authUser"))
+        const userObj = JSON.parse(localStorage.getItem("authUser"))
+        var userGrants = userObj.role.name
+        // if(userGrants[0])
+        console.log('Grants')
+        console.log(userGrants)
         this.state = {
+            userGrants : userGrants
         };
     }
 
     componentDidMount() {
         this.initMenu();
+        // console.log('AUTH DATA')
+        // console.log(localStorage.getItem("authUser"))
     }
 
     componentDidUpdate(prevProps) {
@@ -71,6 +81,8 @@ class SidebarContent extends Component {
     };
 
     render() {
+        const isClientGranted = this.state.userGrants == 'Super User' || this.state.userGrants == 'System User' ? true : false
+        const isUserGranted = this.state.userGrants == 'Super User' || this.state.userGrants == 'System Admin' || this.state.userGrants == 'Client Admin' || this.state.userGrants == 'System User' ? true : false
         return (
             <React.Fragment>
                  <div id="sidebar-menu">
@@ -87,17 +99,75 @@ class SidebarContent extends Component {
                                     <li><Link to="/dashboard-crypto">{this.props.t('Crypto') }</Link></li>
                                 </ul>
                      </li>
+                     {isClientGranted && 
                      <li>
                          <Link to="/#" className="waves-effect">
-                                    <i className="bx bxs-phone-incoming"></i>
+                                    <i className="bx bx-user"></i>
                                     <span>{this.props.t('Clients Management') }</span>
                                 </Link>
                                 <ul className="sub-menu" aria-expanded="false">
                                     <li><Link to="/clients">{this.props.t('Client List') }</Link></li>
+                                    {this.state.userGrants != 'System User' &&                                   
                                     <li><Link to="/client_create">{this.props.t('Client Create') }</Link></li>
+                                    }
+                                    
                                 </ul>
                      </li>
+                    }
+                     {isUserGranted &&
 
+                     <li>
+                        <Link to="/#" className="waves-effect">
+                            <i className="bx bx-user"></i>
+                            <span>{this.props.t('Users Management') }</span>
+                        </Link>
+                        <ul className="sub-menu" aria-expanded="false">
+                            <li><Link to="/users">{this.props.t('User List') }</Link></li>
+                            {this.state.userGrants != 'System User' &&
+                            <li><Link to="/user_create">{this.props.t('User Create') }</Link></li>
+                            }
+                        </ul>
+                    </li>
+                    }
+                     {isUserGranted &&
+
+                    <li>
+                        <Link to="/#" className="waves-effect">
+                            <i className="bx bx-user"></i>
+                            <span>{this.props.t('Services') }</span>
+                        </Link>
+                        <ul className="sub-menu" aria-expanded="false">
+                            <li><Link to="#">{this.props.t('Facebook') }</Link></li>
+                            <li><Link to="/service/whatsapp_business">{this.props.t('Whatsapp Business') }</Link></li>
+                            <li><Link to="#">{this.props.t('Twitter') }</Link>
+                                <ul className="sub-menu" aria-expanded="false">
+                                    {this.state.userGrants != 'System User' &&
+                                    <li><Link to="/create_key">{this.props.t('Create Key') }</Link></li>
+                                    }
+                                </ul>
+                            </li>
+                        </ul>
+                        </li>
+                    }
+                                    
+                    {this.state.userGrants == 'Super User' &&
+                    <li>
+                        <Link to="/#" className="waves-effect">
+                            <i className="bx bx-wrench"></i>
+                            <span>{this.props.t('System Settings') }</span>
+                        </Link>
+                        <ul className="sub-menu" aria-expanded="false">
+                            <li><Link to="/mail-template">{this.props.t('Template') }</Link></li>
+                            <li><Link to="/mail-settings">{this.props.t('Mail Configurations') }</Link></li>
+                        </ul>
+                    </li>
+                    // <li>
+                    //     <Link to="mail-template" className="waves-effect">
+                    //         <i className="bx bx-calendar"></i>
+                    //         <span>{this.props.t('Mail Template') }</span>
+                    //     </Link>
+                    // </li>
+                    }
                     <li className="menu-title">{this.props.t('Apps') }</li>
 
                     <li>
@@ -154,6 +224,9 @@ class SidebarContent extends Component {
                             <span>{this.props.t('Email')}</span>
                         </Link>
                         <ul className="sub-menu" aria-expanded="false">
+                            {this.state.userGrants == 'Super User' &&
+                            <li><Link to="mail-settings">{this.props.t('System Mail Settings')} </Link></li>
+                            }
                             <li><Link to="email-inbox">{this.props.t('Inbox')}</Link></li>
                             <li><Link to="email-read">{this.props.t('Read Email')} </Link></li>
                         </ul>

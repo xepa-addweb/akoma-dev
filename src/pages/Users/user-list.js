@@ -32,40 +32,62 @@ const instance = axios.create();
 //         </td>
 //     </tr>
 // )
-class ContactsList extends Component {
+class UsersList extends Component {
     constructor(props) {
         super(props);
         const userObj = JSON.parse(localStorage.getItem("authUser"))
         var userGrants = userObj.role.name
-        // if(userGrants[0])
-        // console.log('Grants')
-        // console.log(userGrants)
-        this.state = {clients: [],
-                     userGrants : userGrants
+        var userClient = ''
+        console.log('dasdasdasf')
+        console.log(userObj.client)
+        var userClientArr = userObj.client
+        if(userClientArr.length > 0) {
+         userClient = userClientArr[0]
+        }
+        this.state = {users: [],
+        userGrants : userGrants,
+        userClient : userClient
         };
     }
 
     componentDidMount() {
-        instance.get('http://localhost:4000/clients/')
+        const userRole = this.state.userGrants
+        const userClient = this.state.userClient
+        console.log('CLIENNT')
+        console.log(userClient)
+        if(userRole == 'Super User' || userRole == 'System User') {
+        instance.get('http://localhost:4000/users/')
             .then(response => {
-                console.log('CLIENTS')
+                console.log('USERS')
                 console.log(response)
-                this.setState({ clients: response.data });
+                this.setState({ users: response.data });
             })
             .catch(function (error){
                 console.log(error);
             })
+        } else {
+            instance.get('http://localhost:4000/users/userByClient/'+userClient)
+            .then(response => {
+                console.log('USERS')
+                console.log(response)
+                this.setState({ users: response.data });
+            })
+            .catch(function (error){
+                console.log(error);
+            })  
+        }
     }
 
     onDeleteClick(id) {
-        instance.delete('http://localhost:4000/clients/delete/'+id)
+        console.log('user_del: ', id);
+        instance.delete('http://localhost:4000/users/delete/'+id)
             .then(response => {
-                console.log('CLIENTS Delete')
+                console.log('Users Delete')
                 console.log(response)
                 var title = 'Success'
-                var message = "Client deleted successfully"
+                var message = "User deleted successfully"
                 toastr.success(message,title)
-                this.setState({ clients: response.data });
+                this.setState({ users: response.data });
             })
             .catch(function (error){
                 console.log(error);
@@ -78,7 +100,7 @@ class ContactsList extends Component {
                     <Container fluid>
 
                         {/* Render Breadcrumbs */}
-                        <Breadcrumbs title="Clients" breadcrumbItem="client List" />
+                        <Breadcrumbs title="Contacts" breadcrumbItem="Users List" />
 
                         <Row>
                             <Col lg="12">
@@ -88,30 +110,47 @@ class ContactsList extends Component {
                                             <Table className="table-centered table-nowrap table-hover">
                                                 <thead className="thead-light">
                                                     <tr>
-                                                        <th scope="col">Company Name</th>
+                                                        <th scope="col">First Name</th>
+                                                        <th scope="col">Last Name</th>
+                                                        <th scope="col">Username</th>
                                                         <th scope="col">Email</th>
-                                                        <th scope="col">Website</th>
+                                                        <th scope="col">Status</th>
+                                                        <th scope="col">Role</th>
                                                         <th scope="col">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {this.state.clients.map((currentClient, i) =>
-                                                    
+                                                    {this.state.users.map((currentUser, i) => {
+                                                    var roleName= ''
+                                                    if(currentUser.role == 1) {
+                                                        roleName = 'System Admin'
+                                                    }
+                                                    else if(currentUser.role == 2) {
+                                                        roleName = 'Client Admin'
+                                                    }
+                                                    else {
+                                                        roleName = 'Agent'
+                                                    }
+                                                    return (
                                                         <tr key={i}>
-                                                            <td>{currentClient.company_name}</td>
-                                                            <td>{currentClient.email}</td>
-                                                            <td>{currentClient.website}</td>
+                                                            <td>{currentUser.first_name}</td>
+                                                            <td>{currentUser.last_name}</td>
+                                                            <td>{currentUser.username}</td>
+                                                            <td>{currentUser.email}</td>
+                                                            <td>{currentUser.status}</td>
+                                                            <td>{currentUser.role.name}</td>
                                                             <td>
-                                                                {this.state.userGrants == 'Super User' &&
-                                                                <Link to={"client/edit/"+currentClient._id}>Edit</Link>                                                                
+                                                                {this.state.userGrants != 'System User' &&
+                                                                <Link to={"/user_edit/"+currentUser._id}>Edit</Link>
                                                                 }{' '}
-                                                                {this.state.userGrants == 'Super User' &&
+                                                                {this.state.userGrants != 'System User' &&
                                                                 <Link to="/#" onClick={e => {e.preventDefault();
-                                                                    this.onDeleteClick(currentClient._id)}}>Delete</Link>
+                                                                    this.onDeleteClick(currentUser._id)}}>Delete</Link>
                                                                 }
                                                             </td>
                                                         </tr>
                                                     )
+                                                    })
                                                 }
                                                 {/* { this.clientList() } */}
                                                     {/* {
@@ -224,4 +263,4 @@ class ContactsList extends Component {
     }
 }
 
-export default ContactsList;
+export default UsersList;

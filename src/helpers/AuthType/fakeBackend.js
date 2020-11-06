@@ -1,6 +1,9 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import accessToken from "../jwt-token-access/accessToken";
+import jwt from 'jsonwebtoken'
+const instance = axios.create();
+
 
 let users = [
   { uid: 1, username: 'admin', role : 'admin', password: '123456', email: 'admin@themesbrand.com' }
@@ -67,25 +70,71 @@ const fakeBackend = () => {
   mock.onPost('/post-jwt-login').reply(function (config) {
 
     const user = JSON.parse(config['data']);
-    const validUser = users.filter(usr => usr.email === user.email && usr.password === user.password);
-    
-    return new Promise(function (resolve, reject) {
-      setTimeout(function () {
-        if (validUser['length'] === 1) {
+    console.log('JSON PARSE')
+    console.log(user)
+          return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+              instance.post('http://localhost:4000/users/authenticate', user)
+              .then(res => {
+                console.log('Login Response Data')
+                  console.log(res.data)
+                  var loginUser = [res.data]
+                  const validUser = loginUser.filter(usr => usr.email === user.email);
+              console.log(validUser['length'])
+              if (validUser['length'] === 1) {
+                
+                // You have to generate AccessToken by jwt. but this is fakeBackend so, right now its dummy
+                var passEmail = user.email
+                const payload = { passEmail };
+                const secret = 'mysecretsshhh';
+
+                const accessToken = jwt.sign(payload, secret, {
+                  expiresIn: '1h'
+                });
+                // console.log(accessToken)
+                var token = 'Bearer ' + accessToken;
+
+                    // JWT AccessToken
+                    const tokenObj = { accessToken : token };    // Token Obj
+                    const validUserObj = { ...validUser[0], ...tokenObj };    // validUser Obj
+                // console.log(validUserObj)    
+
+                resolve([200, validUserObj]);
+              } else {
+                reject([400, "Username and password are invalid. Please enter correct username and password"]);
+              }
+            })
+            .catch(error => {
+                console.log(error)
+                reject([400, "Username and password are invalid. Please enter correct username and password"]);
+
+                // e.target.reset();
+                // console.log(error.response.data.error)
+            });
+          });
           
-          // You have to generate AccessToken by jwt. but this is fakeBackend so, right now its dummy
-          var token = accessToken;
+      })
+      
 
-              // JWT AccessToken
-              const tokenObj = { accessToken : token };    // Token Obj
-              const validUserObj = { ...validUser[0], ...tokenObj };    // validUser Obj
+    // const validUser = users.filter(usr => usr.email === user.email && usr.password === user.password);
+    
+    // return new Promise(function (resolve, reject) {
+    //   setTimeout(function () {
+    //     if (validUser['length'] === 1) {
+          
+    //       // You have to generate AccessToken by jwt. but this is fakeBackend so, right now its dummy
+    //       var token = accessToken;
 
-          resolve([200, validUserObj]);
-        } else {
-          reject([400, "Username and password are invalid. Please enter correct username and password"]);
-        }
-      });
-    });
+    //           // JWT AccessToken
+    //           const tokenObj = { accessToken : token };    // Token Obj
+    //           const validUserObj = { ...validUser[0], ...tokenObj };    // validUser Obj
+
+    //       resolve([200, validUserObj]);
+    //     } else {
+    //       reject([400, "Username and password are invalid. Please enter correct username and password"]);
+    //     }
+    //   });
+    // });
   });
 
 

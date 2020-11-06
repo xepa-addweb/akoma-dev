@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { Link, Route } from "react-router-dom";
+import { Link, BrowserRouter as Router, Route,Switch, Redirect } from "react-router-dom";
 import { Container, Row, Col, Card, CardBody, CardTitle, Input, Form, FormGroup, Label, Button, Badge } from "reactstrap";
 
 // Import Editor
@@ -19,13 +19,12 @@ import { AvForm, AvField } from "availity-reactstrap-validation";
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import ClientList from "./client-list";
-import SimpleReactValidator from 'simple-react-validator';
 
 
 const instance = axios.create();
 
 
-class ClientCreate extends Component {
+class ClientEdit extends Component {
     constructor(props) {
         super(props);
         this.options = countryList().getData()
@@ -34,13 +33,27 @@ class ClientCreate extends Component {
         this.state = {            
             options: this.options,
             value: null,
-            client_admins : []
+            client_admins : [],
+            current_client : {},
+            profileLogo : ''
         }
-        this.validator = new SimpleReactValidator({autoForceUpdate: this});
-        
     }
 
     componentDidMount() {
+        // alert(this.props.match.params.id)
+        var clientID = this.props.match.params.id
+        instance.get('http://localhost:4000/clients/'+clientID)
+        .then(response => {
+            console.log('CLIENT EDIT')
+            console.log(response)
+            var clientData = response.data 
+            var profileLogo = '../../src/public/clients/'+clientData.company_logo           
+            this.setState({ current_client: clientData, profileLogo : profileLogo });
+        })
+        .catch(function (error){
+            console.log(error);
+        })
+
         instance.get('http://localhost:4000/users/')
             .then(response => {
                 console.log('USERS')
@@ -71,79 +84,45 @@ class ClientCreate extends Component {
       console.log(`Email : ${this.email}`);
       console.log(`Country : ${this.country_code}`);
 
-      
-         this.validator.showMessages();
-    
-        console.log('111111111')
-        // console.log(this.company_logo.File)
-        var payload = {
-            company_name : this.company_name,
-            client_name : this.client_name,
-            email : this.email,
-            website : this.website,
-            address : this.address,
-            phone : this.phone,
-            country_code : this.country_code,
-            client_admin : this.client_admin,
-            company_logo : 'client_'+this.logo_name
-        }
-        console.log('payload')
-        console.log(payload)
-        instance.post('http://localhost:4000/clients/create', payload)
-        .then(res => {
-            console.log(res.data)
-            var title = 'Success'
-            var message = "Client created successfully"
-            toastr.success(message,title)
-            this.props.history.push('/clients');
-            
-        })
-        .catch(error => {
-            console.log(error)
-            // e.target.reset();
-            // console.log(error.response.data.error)
-        });     
+
+      if(this.email == ''){
+        return
+      }
+
+      var payload = {
+        company_name : this.company_name,
+        email : this.email,
+        website : this.website,
+        address : this.address,
+        phone : this.phone,
+        country_code : this.country_code,
+        client_admin : this.client_admin
+      }
+      console.log('payload')
+      console.log(payload)
+      instance.post('http://localhost:4000/clients/update/'+this.props.match.params.id, payload)
+      .then(res => {
+        console.log(res.data)
+        var title = 'Success'
+        var message = "Client updated successfully"
+        toastr.success(message,title)
+        this.onClickCancel()
+        
+      })
+      .catch(error => {
+        console.log(error)
+        // e.target.reset();
+        // console.log(error.response.data.error)
+      });
   }
 
   changeHandler = value => {
     this.setState({ value })
   }
 
-  //Select
-    handleSelectGroup = country_code => {
-        this.country_code =  country_code.value;
-    };
-    handleMulti = client_admin => {
-        var clientAdmins = []
-        client_admin.forEach(function(cax) {
-            clientAdmins.push(cax.value)
-        })
-        this.client_admin = clientAdmins;
-    }
-
-    onFileChange(e) {
-        e.preventDefault();
-        this.company_logo = e.target.files[0]
-        console.log('LOGO '+e.target.files[0].name)  
-        this.logo_name = e.target.files[0].name
-        const data = new FormData()
-        data.append('file', this.company_logo)
-        console.log('File Data')
-        console.log(data)
-        instance.post("http://localhost:4000/clients/upload", data, { // receive two parameter endpoint url ,form data 
-        })
-        .then(res => { // then print response status
-                      
-            console.log(res.statusText)
-        })
-        .catch(error => {
-            console.log(error)
-            // e.target.reset();
-            // console.log(error.response.data.error)
-        }); 
-          
-        // this.company_logo = e.target.files[0]
-    }
+  onClickCancel = () => {
+        this.props.history.push('/clients');
+  }
   
     render() {
         return (
@@ -152,85 +131,83 @@ class ClientCreate extends Component {
                     <Container fluid>
 
                         {/* Render Breadcrumbs */}
-                        <Breadcrumbs title="Clients" breadcrumbItem="Create Client" />
+                        <Breadcrumbs title="Clients" breadcrumbItem="Edit Client" />
                         
                         <Row>
                             <Col lg="12">
                                 <Card>
                                     <CardBody>
                                         <CardTitle className="mb-4">Create Client</CardTitle>
-                                        <form className="needs-validation outer-repeater" onSubmit={e => this.onFormSubmit(e)}>
+                                        <AvForm className="needs-validation outer-repeater" onSubmit={e => this.onFormSubmit(e)}>
                                             <div data-repeater-list="outer-group" className="outer">
                                                 <div data-repeater-item className="outer">
                                                     <FormGroup className="mb-4" row>
                                                         <Label htmlFor="companyname" className="col-form-label col-lg-2">Company Name</Label>
                                                         <Col lg="10">
-                                                        <input
+                                                        <AvField
                                                           name="companyname"
                                                           placeholder="Company name"
                                                           type="text"
+                                                          errorMessage="Enter Company Name"
                                                           className="form-control"
+                                                          validate={{ required: { value: true } }}
                                                           id="companyname"
+                                                          value={this.state.current_client.company_name}
                                                           onChange={(e) => this.onChangeInput(e, 'company_name')}
                                                         />
-                                                        {this.validator.message('company_name', this.company_name, 'required', { className: 'text-danger' })}
-                                                        </Col>
-                                                    </FormGroup>
-                                                    <FormGroup className="mb-4" row>
-                                                        <Label htmlFor="clientname" className="col-form-label col-lg-2">Client Name</Label>
-                                                        <Col lg="10">
-                                                        <input
-                                                          name="clientname"
-                                                          placeholder="Client name"
-                                                          type="text"
-                                                          className="form-control"
-                                                          id="clientname"
-                                                          onChange={(e) => this.onChangeInput(e, 'client_name')}
-                                                        />
-                                                        {this.validator.message('client_name', this.client_name, 'required', { className: 'text-danger' })}
                                                         </Col>
                                                     </FormGroup>
                                                     <FormGroup className="mb-4" row>
                                                         <Label htmlFor="email" className="col-form-label col-lg-2">Email</Label>
                                                         <Col lg="10">
-                                                        <input
+                                                        <AvField
                                                           name="email"
                                                           placeholder="Email"
                                                           type="email"
+                                                          errorMessage="Enter Valid Email"
                                                           className="form-control"
+                                                          validate={{ required: { value: true },email: { value: true } }}
                                                           id="email"
+                                                          value={this.state.current_client.email}
                                                           onChange={(e) => this.onChangeInput(e, 'email')}
                                                         />
-                                                        {this.validator.message('email', this.email, 'required|email', { className: 'text-danger' })}
                                                         </Col>
                                                     </FormGroup>
                                                     <FormGroup className="mb-4" row>
                                                         <Label htmlFor="website" className="col-form-label col-lg-2">Website</Label>
                                                         <Col lg="10">
-                                                        <input
+                                                        <AvField
                                                           name="website"
                                                           placeholder="Website"
                                                           type="text"
+                                                          errorMessage="Enter website"
                                                           className="form-control"
+                                                          validate={{ required: { value: true } }}
                                                           id="website"
+                                                          value={this.state.current_client.website}
                                                           onChange={(e) => this.onChangeInput(e, 'website')}
                                                         />
-                                                        {this.validator.message('website', this.website, 'required|url', { className: 'text-danger' })}
-
                                                         </Col>
                                                     </FormGroup>
                                                     <FormGroup className="mb-4 select2-container" row>
                                                         <Label htmlFor="country" className="col-form-label col-lg-2">Country</Label>
                                                         <Col lg="10">
-                                                        <Select
+                                                        <AvField
                                                           name="country"
+                                                          placeholder="country"
+                                                          type="select"
+                                                          errorMessage="Enter country"
+                                                          className="form-control select2"
+                                                          classNamePrefix="select2"
+                                                          validate={{ required: { value: true } }}
                                                           id="country"
-                                                          options={this.state.options}
-                                                          classNamePrefix="select2-selection"
-                                                          onChange={this.handleSelectGroup}
-                                                            
-                                                        />
-                                                        {this.validator.message('country', this.country_code, 'required', { className: 'text-danger' })}
+                                                          value={this.state.current_client.country_code}
+                                                          onChange={(e) => this.onChangeInput(e, 'country_code')}>
+                                                        <option>Select Country</option>        
+                                                        {this.state.options && this.state.options.map((cname, i) =>
+                                                        <option value={cname.value} key={cname.value}>{cname.label}</option>
+                                                        )}        
+                                                        </AvField>
                                                         
                                                         {/* <Select
                                                             options={this.state.options}
@@ -243,16 +220,17 @@ class ClientCreate extends Component {
                                                     <FormGroup className="mb-4" row>
                                                         <Label htmlFor="address" className="col-form-label col-lg-2">Address</Label>
                                                         <Col lg="10">
-                                                        <input
+                                                        <AvField
                                                           name="address"
                                                           placeholder="Address"
                                                           type="textarea"
+                                                          errorMessage="Enter address"
                                                           className="form-control"
+                                                          validate={{ required: { value: true } }}
                                                           id="address"
+                                                          value={this.state.current_client.address}
                                                           onChange={(e) => this.onChangeInput(e, 'address')}
                                                         />
-                                                        {/* {this.validator.message('address', this.address, 'required', { className: 'text-danger' })} */}
-
                                                             {/* <Editor
                                                                 toolbarClassName="toolbarClassName"
                                                                 wrapperClassName="wrapperClassName"
@@ -264,55 +242,66 @@ class ClientCreate extends Component {
                                                     <FormGroup className="mb-4" row>
                                                         <Label htmlFor="phone" className="col-form-label col-lg-2">Phone</Label>
                                                         <Col lg="10">
-                                                        <input
+                                                        <AvField
                                                           name="phone"
                                                           placeholder="Phone"
                                                           type="number"
-                                                          id="phone"
+                                                          errorMessage="Enter phone"
                                                           className="form-control"
+                                                          validate={{ required: { value: true },pattern: {
+                                                            value: "^[0-9]+$",
+                                                            errorMessage: "Only Numbers"
+                                                          } }}
+                                                          id="phone"
+                                                          value={this.state.current_client.phone}
                                                           onChange={(e) => this.onChangeInput(e, 'phone')}
                                                         />
-                                                        {this.validator.message('phone', this.phone, 'required|numeric', { className: 'text-danger' })}
-
                                                         </Col>
                                                     </FormGroup>
                                                     <FormGroup className="mb-4" row>
                                                         <Label htmlFor="companylogo" className="col-form-label col-lg-2">Company Logo</Label>
                                                         <Col lg="10">
                                                         <div className="custom-file">
-                                                            <Input id="companylogo" name="companylogo" type="file" className="custom-file-input" onChange={(e) => this.onFileChange(e)} />
+                                                            <Input id="companylogo" name="companylogo" type="file" className="custom-file-input" onChange={(e) => this.onChangeInput(e, 'company_logo')} />
                                                             <label className="custom-file-label" htmlFor="companylogo">Choose file</label>
-
+                                                        <img src={`/${this.state.current_client.company_logo}`} height="40px" width="40px"/>
+                                                          
                                                         </div>
-                                                        {/* {this.validator.message('company_logo', this.company_logo, 'required|numeric', { className: 'text-danger' })} */}
 
                                                         </Col>
                                                     </FormGroup>
-                                                    <FormGroup className="mb-4 select2-container" row>
+                                                    <FormGroup className="mb-4" row>
                                                         <Label htmlFor="companylogo" className="col-form-label col-lg-2">Client Admin</Label>
                                                         <Col lg="10">
-                                                        <Select
+                                                        <AvField
                                                           name="client_admin"
+                                                          placeholder="client_admin"
+                                                          type="select"
+                                                          errorMessage="Enter client_admin"
+                                                          className="form-control select2"
+                                                          classNamePrefix="select2"
+                                                          validate={{ required: { value: true } }}
                                                           id="client_admin"
-                                                          isMulti={true}
-                                                          options={this.state.client_admins}
-                                                          classNamePrefix="select2-selection"   
-                                                          onChange={this.handleMulti}   
-                                                        />
-                                                        {/* {this.validator.message('phone', this.phone, 'required|numeric', { className: 'text-danger' })} */}
-
+                                                          value={this.state.current_client.client_admin}
+                                                          onChange={(e) => this.onChangeInput(e, 'client_admin')}>
+                                                        <option>Select Client Admin</option>        
+                                                        {this.state.client_admins && this.state.client_admins.map((cname, i) =>
+                                                        <option value={cname.value} key={cname.value}  >{cname.label}</option>
+                                                        )}        
+                                                        </AvField>
                                                         </Col>
                                                     </FormGroup>
                                                 </div>
                                             </div>
                                         <Row className="justify-content-end">
                                           <Col lg="10">
-                                              <Button type="submit" color="primary">Create Client</Button>{" "}
-                                              <Button type="reset" color="secondary">Reset</Button>
-                                              <Route path="/clients" component={ClientList}/>                 
+                                              <Button type="submit" color="primary">Update Client</Button>{" "}
+                                              <Button id="b1" onClick ={this.onClickCancel}>Cancel</Button>
+                                                <Route path="/clients" component={ClientList}/>
+
                                           </Col>
                                         </Row>
-                                        </form>
+                                        </AvForm>
                                         
 
                                     </CardBody>
@@ -328,4 +317,4 @@ class ClientCreate extends Component {
     }
 }
 
-export default ClientCreate;
+export default ClientEdit;

@@ -143,7 +143,18 @@ import ContactsProfile from "../pages/Contacts/contacts-profile";
 //Client Management
 import ClientList from "../pages/Clients/client-list";
 import ClientCreate from "../pages/Clients/client-create";
+import ClientEdit from "../pages/Clients/client-edit";
+import UsersList from "../pages/Users/user-list";
+import UserCreate from "../pages/Users/user-create";
+import UserEdit from "../pages/Users/user-edit";
+import UserPasswordSet from "../pages/Users/user-password-set";
 
+import MailSettings from "../pages/MailSettings/mail-settings";
+import MailTemplate from "../pages/MailSettings/mail-template";
+
+import TwitterKeyCreate from '../pages/Twitter/twitter';
+import TwitterWebhook from '../pages/Twitter/webhook';
+import ServiceWhatsAppBusiness from '../pages/Services/ServiceWhatsAppBusiness'
 
 
 const authProtectedRoutes = [
@@ -163,9 +174,17 @@ const authProtectedRoutes = [
 	//Client Management
 	{ path : "/clients", component : ClientList },
 	{ path : "/client_create", component : ClientCreate },
-
-
+	{ path : "/client/edit/:id", component : ClientEdit },
+	{ path: "/users", component: UsersList},
+	{ path : "/user_create", component : UserCreate },
+	{ path : "/user_edit/:id", component: UserEdit },
 	
+	//Twitter Key Managment
+	{ path: '/create_key', component: TwitterKeyCreate},
+	{ path: '/service/whatsapp_business', component: ServiceWhatsAppBusiness},
+	{ path: '/webhook/twitter', component: TwitterWebhook},
+
+
 	//profile
 	{ path: "/profile", component: UserProfile },
 
@@ -188,6 +207,12 @@ const authProtectedRoutes = [
 	//Email
 	{ path: "/email-inbox", component: EmailInbox },
 	{ path: "/email-read", component: EmailRead },
+	{ path: "/mail-settings", component: MailSettings },
+
+	//Template
+	{ path: "/mail-template", component: MailTemplate },
+
+
 
 	//Invoices
 	{ path: "/invoices-list", component: InvoicesList },
@@ -295,7 +320,9 @@ const publicRoutes = [
 	{ path: "/pages-login", component: Login1 },
 	{ path: "/pages-register", component: Register1 },
 	{ path: "/pages-forgot-pwd", component: ForgetPwd1 },
-	{ path : "/auth-lock-screen", component: LockScreen }
+	{ path : "/auth-lock-screen", component: LockScreen },
+	{ path : "/user/password/:id", component: UserPasswordSet },
+
 ];
 
 export { authProtectedRoutes, publicRoutes };

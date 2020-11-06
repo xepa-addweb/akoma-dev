@@ -123,7 +123,7 @@ class FormAdvanced extends Component {
 			not_attr: 15,
 			explicit_val: 33,
 
-			selectedGroup: null,
+			selectedGroup: 'Relish',
 			selectedMulti: null,
 			selectedMulti1: null,
 			selectedMulti2: null,

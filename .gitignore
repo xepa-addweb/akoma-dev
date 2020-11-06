@@ -16,3 +16,4 @@ logs/error.log
 public/js
 public/uploads/tickets
 public/uploads/users
+/public

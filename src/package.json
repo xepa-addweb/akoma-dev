@@ -1,0 +1,12 @@
+{
+  "name": "new_server",
+  "version": "1.0.0",
+  "description": "make app better",
+  "main": "new_server.js",
+  "scripts": {
+    "test": "node new_server.js",
+    "start": "node server.js"
+  },
+  "author": "Xepa Pandya",
+  "license": "ISC"
+}

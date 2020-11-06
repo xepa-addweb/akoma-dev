@@ -7,12 +7,8 @@ const { Autohook } = require('twitter-autohook');
 var rp = require('request-promise');
 const socketIo = require("socket.io");
 const http = require("http");
-const https = require('https');
 var Twit = require('twit')
 const fs = require("fs")
-var request = require('request')
-var axios = require("axios").default;
-
 
 const security = require('./security')
 
@@ -80,7 +76,7 @@ const io = socketIo(server);
       webhook.on('event', event => console.log('Something happened:', event));
       
       // Starts a server and adds a new webhook
-      var webhookUrl = "https://3954b9066486.ngrok.io/webhook/twitter"
+      var webhookUrl = "https://ef75bb14c314.ngrok.io/webhook/twitter"
       await webhook.start(webhookUrl);
       
       // Subscribes to a user's activity
@@ -100,13 +96,8 @@ const io = socketIo(server);
       if(request.body.tweet_delete_events) {
         io.sockets.emit('tweet_event');
       }
-      if(request.body.favorite_events) {
-        io.sockets.emit('tweet_event')
-      }
       if(request.body.direct_message_events) {
-        if(request.body.direct_message_events[0].message_create.target.recipient_id === '1281552432514859008') {
-          io.sockets.emit('new_direct_message', request.body)
-        }
+        io.sockets.emit('new_direct_message', request.body)
       }
       // if(request.body.direct_message_events) {
       //   console.log(request.body.direct_message_events[0].message_create)
@@ -378,23 +369,6 @@ Routes.route('/update/:id').post(function(req, res) {
         else
             res.json(client);
     });
-});
-Routes.route('/update_service').post(function(req, res) {
-  var requestBody = req.body
-  
-  requestBody.twitter_consumer_key = base64.encode(requestBody.twitter_consumer_key)
-  requestBody.twitter_consumer_secret = base64.encode(requestBody.twitter_consumer_secret)
-  requestBody.twitter_access_token = base64.encode(requestBody.twitter_access_token)
-  requestBody.twitter_access_token_secret = base64.encode(requestBody.twitter_access_token_secret)
-
-  clientSchema.findOneAndUpdate({ _id: requestBody.client }, requestBody, function(err, client) {
-      if (!client)
-          res.status(404).send("data is not found");
-      else if(err)
-          res.status(404).send("Something went wrong")
-      else
-          res.json(client);
-  });
 });
 Routes.route('/delete/:id').delete(async (req, res) => {
     console.log('New client')
@@ -776,45 +750,59 @@ app.get('/webhook/twitter', function(request, response) {
 
 //Twitter APIs
 //Twitter autohook
+var T = new Twit({
+  consumer_key:         'F8xqPxo7D4A5Og4EeJyQKkY9m',
+  consumer_secret:      '1bSUgNNOXpsZl2EdbJcAsoaL5E15Tsje66XqgySCxHWIrpNQYs',
+  access_token:         '1281552432514859008-kEz3AQd9J1GH9R8qju99YG42RwuGcm',
+  access_token_secret:  'kdXIW35gxYf7si2FDd9RissqnQ0TwfAYIBMqp2f5ycwGa',
+  timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
+  // strictSSL:            true,     // optional - requires SSL certificates to be valid.
+})
+
 // const imageData = fs.readFileSync("src/public/clients/1603182490941-anonymous.png") //replace with the path to your image
 
 // console.log('imagedata')
 // console.log(imageData
-app.post('/twitter/followers', function(request, response1) {
-  console.log("aasa")
+app.get('/twitter/followers', function(request, response1) {
+console.log("aasa")
+var options = {
+  uri: 'https://api.twitter.com/1.1/followers/list.json?user_id=1281552432514859008',
+  headers: {
+      'Authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAAEezJAEAAAAAS7Ygn0I%2BLXYe%2B8XEQAGVpAhS1Ag%3DImOFvSaizTrM8iYnTBxlhJ96xYMe7fsEVyTxu9pdN5VZFLzvx8'
+  },
+  json: true // Automatically parses the JSON string in the response
+};
 
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
+rp(options)
+  .then(function (repos) {
+      console.log('User has %d repos');
+      console.log(repos.users)
+      response1.send(repos.users);
   })
-  T.get('followers/list', function(err, data, response) {
-    if(err) {
-      response1.send({status : 500})
-    }
-    response1.send(data.users);
-  })
+  .catch(function (err) {
+      // API call failed...
+  });
 })
 
-app.post('/twitter/tweets', function(request, response1) {
-  console.log("aasa")
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
+app.get('/twitter/tweets', function(request, response1) {
+console.log("aasa")
+var options = {
+  uri: 'https://api.twitter.com/1.1/statuses/user_timeline.json?id=1281552432514859008',
+  headers: {
+      'Authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAAEezJAEAAAAAS7Ygn0I%2BLXYe%2B8XEQAGVpAhS1Ag%3DImOFvSaizTrM8iYnTBxlhJ96xYMe7fsEVyTxu9pdN5VZFLzvx8'
+  },
+  json: true // Automatically parses the JSON string in the response
+};
+
+rp(options)
+  .then(function (repos) {
+      // console.log('User has %d repos');
+      // console.log(repos)
+      response1.send(repos);
   })
-  T.get('statuses/user_timeline', function(err, data, response) { 
-    if(err) {
-      response1.send({status : 500})
-    }
-    response1.send(data); 
-  })
+  .catch(function (err) {
+      // API call failed...
+  });
 })
 
 //Direct messages
@@ -844,127 +832,104 @@ app.post('/twitter/tweets', function(request, response1) {
 		
 // 	return time;
 // }
-app.post('/twitter/chats', function(request, response1) {
-    console.log("aasa")
-    var T = new Twit({
-      consumer_key:         base64.decode(request.body.twitter_consumer_key),
-      consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-      access_token:         base64.decode(request.body.twitter_access_token),
-      access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-      timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-      // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-    })
+app.get('/twitter/chats', function(request, response1) {
+console.log("aasa")
     T.get('direct_messages/events/list', function(err, data, response) {
       // console.log('User has %d repos');
       if(err) { response1.send(err) 
       } else {
-      // console.log(data.events)
+      console.log(data.events)
       var chatBox = data.events
       var chatBoxArr = []
+      var conversation = []
       
-      var userChatArr = []
-
+      
       chatBox.forEach(function(chats) {
-        if(!userChatArr.includes(chats.message_create.sender_id)) {
-          userChatArr.push(chats.message_create.sender_id)
-        }
-        if(!userChatArr.includes(chats.message_create.target.recipient_id)) {
-          userChatArr.push(chats.message_create.target.recipient_id)
-        }
-      })
-
-      userChatArr.forEach(function(chData) {
-        var conversation = []
-        chatBox.forEach(async function(chats) {
-          if(chData === chats.message_create.sender_id || chData === chats.message_create.target.recipient_id){
-            console.log('iff')
-            var mediaURL = ''
-            var finalMediaData = ''
+        var targetUser = ''
+        var mediaURL =''
+        if((chats.message_create.sender_id !== '1281552432514859008' || chats.message_create.target.recipient_id !== '1281552432514859008') && !chatBoxArr.includes(chats.message_create.sender_id)) {
+          // chatBoxArr.push({id : chats.message_create.sender_id})
+          targetUser = chats.message_create.sender_id
+          if(chats.message_create.target.recipient_id !== '1281552432514859008' && (chats.message_create.sender_id === targetUser || chats.message_create.target.recipient_id === targetUser)) {
+            console.log('111')
+            // console.log(new Date(chats.created_timestamp * 1000))
             if(chats.message_create.message_data.attachment) {
               if(chats.message_create.message_data.attachment.type == 'media') {
                 mediaURL = chats.message_create.message_data.attachment.media.media_url_https
-                
-                const getResponse = await axios.get(mediaURL, { headers: {
-                  Authorization: 'OAuth oauth_consumer_key="F8xqPxo7D4A5Og4EeJyQKkY9m",oauth_token="1281552432514859008-kEz3AQd9J1GH9R8qju99YG42RwuGcm",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1604494480",oauth_nonce="ahqvsp",oauth_version="1.0",oauth_signature="kLk1ewZRHOM8TPsI5DUBrLNSnqA%3D"'
-                }});
-
-              //  const mergedResponses = { ...getResponse.data };
-              //  console.log(getResponse.data)
-               finalMediaData = getResponse.data
               }
             }
-            var isFrom = false
-            if(chData === chats.message_create.sender_id) {
-              isFrom = true
+            conversation.push({id: chats.id, isFrom : true, text : chats.message_create.message_data.text, toId : chats.message_create.target.recipient_id, fromId : chats.message_create.sender_id, send_time : chats.created_timestamp, media : mediaURL})
+          } else if(chats.message_create.target.recipient_id === '1281552432514859008' && (chats.message_create.sender_id === targetUser || chats.message_create.target.recipient_id === targetUser)){
+            console.log('2222')
+            // console.log(chats.created_timestamp)
+            if(chats.message_create.message_data.attachment) {
+              if(chats.message_create.message_data.attachment.type == 'media') {
+                mediaURL = chats.message_create.message_data.attachment.media.media_url_https
+              }
             }
-            console.log(finalMediaData)
-            conversation.push({id: chats.id, isFrom : isFrom, text : chats.message_create.message_data.text, toId : chats.message_create.target.recipient_id, fromId : chats.message_create.sender_id, send_time : chats.created_timestamp, media : mediaURL })
-          
-
+            conversation.push({id: chats.id, isFrom : false, text : chats.message_create.message_data.text, toId : chats.message_create.target.recipient_id, fromId : chats.message_create.sender_id, send_time : chats.created_timestamp, media : mediaURL })
           }
-        })
-        chatBoxArr.push({id : chData, ownerId : '1281552432514859008', conversation : conversation})          
+          // console.log(conversation)
+          // var orderedConversation = conversation.reverse();
+          // console.log('target'+targetUser)
+          chatBoxArr.push({id : chats.message_create.sender_id, ownerId : '1281552432514859008', conversation : conversation})          
+          
+          console.log(chatBoxArr)
+          targetUser = ''
+        } 
+        // else if(chats.message_create.sender_id === '1281552432514859008') {
+        //   console.log("dddd")
+        //   conversation.push({isFrom : true, text : chats.message_create.message_data.text, toId : chats.message_create.target.recipient_id })
+        //   targetUser = ''
+          
+        // }
+        // chatBoxArr.push({conversation : conversation})  
+      })
+      var finalChatBox = []
+      var removeObj = []
+      chatBoxArr.forEach(function(carr) {
+        if(carr.id != '1281552432514859008' && !removeObj.includes(carr.id)) {
+          finalChatBox.push(carr)
+        }
+        removeObj.push(carr.id)
 
       })
-      console.log(chatBoxArr)
-      
-      response1.send(chatBoxArr);
+      response1.send(finalChatBox);
     }
 
   })
 })
 
-// async function getMedialData(url) {
-//   var options = {
-//     method: 'GET',
-//     url: url,
-//     headers: {
-//       Authorization: 'OAuth oauth_consumer_key="F8xqPxo7D4A5Og4EeJyQKkY9m",oauth_token="1281552432514859008-kEz3AQd9J1GH9R8qju99YG42RwuGcm",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1604494480",oauth_nonce="ahqvsp",oauth_version="1.0",oauth_signature="kLk1ewZRHOM8TPsI5DUBrLNSnqA%3D"'
-//     }
-//   };
-  
-//   var mediaData = axios.request(options).then(function (response) {
-//     console.log('SUCCESS');
-    
-//     return response.data
-//   }).catch(function (error) {
-//     console.error(error);
-//     return error
-//   });
-//   return mediaData
-// }
-
 app.get('/twitter/users/:id', function(request, response1) {
   console.log(request)
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
+  var options1 = {
+    uri: 'https://api.twitter.com/1.1/users/show.json?user_id='+request.params.id,
+    headers: {
+        'Authorization': 'OAuth oauth_consumer_key="F8xqPxo7D4A5Og4EeJyQKkY9m",oauth_token="1281552432514859008-kEz3AQd9J1GH9R8qju99YG42RwuGcm",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1604040820",oauth_nonce="rGNR2Z",oauth_version="1.0",oauth_signature="F3SSyBxqSWSir14Dlsm%2B8mxj8Us%3D"'
+    },
+    json: true // Automatically parses the JSON string in the response
+  };
+  console.log(options1)
+  var chatBoxArr = []
+  rp(options1)
+  .then(function (repos1) {
+      console.log('User details');
+      // console.log(repos)
+      var userData = repos1
+      chatBoxArr.push({name : userData.name, profile_image_url_https : userData.profile_image_url_https})
+      
+      response1.send(userData);
   })
-
-  T.get('users/show', {id : request.params.id}, function(err, data, response) {
-      if(err) {
-        response1.send({status : 400})
-      }
-      response1.send(data);
+  .catch(function (err) {
+      // API call failed...
+      console.log(err)
   });
-})
+  
+});
 
 
-app.post('/twitter/lookup/:id', function(request, response1) {
+app.get('/twitter/lookup/:id', function(request, response1) {
   console.log(request)
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-  })
-
   T.get('users/show', { id: request.params.id },  function (err, data, response) {
     console.log('Twit package data')
     console.log(data) 
@@ -979,26 +944,18 @@ app.post('/twitter/lookup/:id', function(request, response1) {
 //   console.log('Twit package data')
 //   console.log(data)
 // })
-// var T = new Twit({
-//   consumer_key:         'F8xqPxo7D4A5Og4EeJyQKkY9m',
-//   consumer_secret:      '1bSUgNNOXpsZl2EdbJcAsoaL5E15Tsje66XqgySCxHWIrpNQYs',
-//   access_token:         '1281552432514859008-kEz3AQd9J1GH9R8qju99YG42RwuGcm',
-//   access_token_secret:  'kdXIW35gxYf7si2FDd9RissqnQ0TwfAYIBMqp2f5ycwGa',
-//   timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-//   // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-// })
-// T.get('account/verify_credentials', {
-//   include_entities: false,
-//   skip_status: true,
-//   include_email: false
-// }, onAuthenticated)
+T.get('account/verify_credentials', {
+  include_entities: false,
+  skip_status: true,
+  include_email: false
+}, onAuthenticated)
 
-// function onAuthenticated(err){
-//   if (err) {
-//       console.log(err)
-//   } else {
-//   console.log('Authentication successful.')
-// }}
+function onAuthenticated(err){
+  if (err) {
+      console.log(err)
+  } else {
+  console.log('Authentication successful.')
+}}
 
 
 var storage1 = multer.diskStorage({
@@ -1026,19 +983,9 @@ app.post('/twitter/media/upload',function (req, res) {
 
     })
 });
-
 app.post('/twitter/direct_message', function(request, response1) {
 console.log("MESSAGE REQUEST")
 console.log(request.body)
-
-var T = new Twit({
-  consumer_key:         base64.decode(request.body.twitter_consumer_key),
-  consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-  access_token:         base64.decode(request.body.twitter_access_token),
-  access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-  timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-  // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-})
 
 var msgBody =request.body
 if(msgBody.filename) {
@@ -1119,257 +1066,7 @@ console.log(mediaIdStr)
 }
 })
 
-app.post('/twitter/image', function(request, response1) {
-  
-  // var options1 = {
-  //   headers: {
-  //       'Authorization': 'OAuth oauth_consumer_key="F8xqPxo7D4A5Og4EeJyQKkY9m",oauth_token="1281552432514859008-kEz3AQd9J1GH9R8qju99YG42RwuGcm",oauth_signature_method="HMAC-SHA1",oauth_timestamp="GENERATED",oauth_nonce="GENERATED",oauth_version="1.0",oauth_signature="GENERATED"'
-  //   }
-  // };
-  // request.get('https://ton.twitter.com/1.1/ton/data/dm/1034828552951160836/1034828533812486145/oP5p359h.jpg',options1, function (e, r, user) {
-  //   console.log(e)
-  //   console.log(r)
-  //   console.log(user)
-  //   console.log('sdfsdfsdf')
-  // })
-  var imageBody = request.body
-  console.log(imageBody)
-  var options = {
-    method: 'GET',
-    url: imageBody.image,
-    headers: {
-      Authorization: 'OAuth oauth_consumer_key='+base64.decode(imageBody.twitter_consumer_key)+',oauth_token='+base64.decode(imageBody.twitter_access_token)+',oauth_signature_method="HMAC-SHA1",oauth_timestamp="1604494480",oauth_nonce="ahqvsp",oauth_version="1.0",oauth_signature="kLk1ewZRHOM8TPsI5DUBrLNSnqA%3D"'
-    }
-  };
-  
-  axios.request(options).then(function (response) {
-    console.log('SUCCESS');
-    
-    response1.send(response.data)
-  }).catch(function (error) {
-    console.error(error);
-    response1.send(error)
-  });
-  
-});
 
-//Post new Tweet
-app.post('/twitter/tweet/new', function(request, response) {
-  var tweetBody =request.body
-
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-  })
-
-  if(tweetBody.tweetMediaName) {
-    var b64content = fs.readFileSync('public/'+tweetBody.tweetMediaName, { encoding: 'base64' })
-    
-    // first we must post the media to Twitter
-    T.post('media/upload', { media_data: b64content }, function (err, data, response1) {
-      // now we can assign alt text to the media, for use by screen readers and
-      // other text-based presentations and interpreters
-      var mediaIdStr = data.media_id_string
-      var altText = "Alternative image text"
-      var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } }
-        console.log("mediaIdStr")
-        console.log(mediaIdStr)
-          T.post('media/metadata/create', meta_params, function (err, data, response2) {
-            if(err) { console.log(err) }
-            if (!err) {
-              var tweetData = ''
-              if(tweetBody.in_reply_to_status_id != '') {
-                tweetData = {
-                  status : request.body.text,
-                  in_reply_to_status_id : tweetBody.in_reply_to_status_id,
-                  media_ids : [mediaIdStr]
-                }
-              } else {
-                tweetData = {
-                  status : request.body.text,
-                  media_ids : [mediaIdStr]
-                }
-              }
-  
-              console.log('TWEETDATA')
-              console.log(tweetData)
-              T.post('statuses/update', tweetData, function (err, data, response3) {
-                if(err) { 
-                  response.send({status : 500, data : err})
-                } 
-                io.emit('tweet_event')
-                response.send({status : 200, data : data})
-              })
-            }
-          })
-    })
-  } else {
-    var tweetData = ''
-    if(tweetBody.in_reply_to_status_id != '') {
-      tweetData = {
-        status : request.body.text,
-        in_reply_to_status_id : tweetBody.in_reply_to_status_id
-      }
-    } else {
-      tweetData = {
-        status : request.body.text
-      }
-    }
-    
-    console.log('TWEETDATA')
-    console.log(tweetData)
-    T.post('statuses/update', tweetData, function (err, data, response1) {
-      if(err) { 
-        response.send({status : 500, data : err})
-      } 
-      io.emit('tweet_event')
-      response.send({status : 200, data : data})
-    })
-  }
-})
-
-//Retweet
-app.post('/twitter/retweet', function (request, response) {
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-  })
-
-  var reTweetBody =request.body
-  console.log(reTweetBody)
-  if(reTweetBody.text != '') {
-    T.post('statuses/retweet/' + reTweetBody.tweetId, {status: reTweetBody.text}, function(error, tweet, response1) {
-      if (!error) {
-        console.log(tweet);
-      }
-      io.emit('tweet_event')
-      response.send({status : 200, data : tweet})
-    }); 
-  } else {
-    T.post('statuses/retweet/' + reTweetBody.tweetId, function(error, tweet, response1) {
-      if (!error) {
-        console.log(tweet);
-      }
-      io.emit('tweet_event')
-      response.send({status : 200, data : tweet})
-    }); 
-  } 
-})
-
-//Like tweet
-app.post('/twitter/tweet/like', function(request, response) {
-  var likeBody = request.body
-
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-  })
-
-  T.post('favorites/create', {id : likeBody.tweetId}, function(err, data, response1) {
-    console.log(data)
-    if (err) {
-      // console.log(tweet);
-      response.send({status : 500})
-    }
-    io.emit('tweet_event')
-    response.send({status : 200, data : data})
-  })
-})
-
-//Unlike tweet
-//Like tweet
-app.post('/twitter/tweet/unlike', function(request, response) {
-  var likeBody = request.body
-
-  var T = new Twit({
-    consumer_key:         base64.decode(request.body.twitter_consumer_key),
-    consumer_secret:      base64.decode(request.body.twitter_consumer_secret),
-    access_token:         base64.decode(request.body.twitter_access_token),
-    access_token_secret:  base64.decode(request.body.twitter_access_token_secret),
-    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
-    // strictSSL:            true,     // optional - requires SSL certificates to be valid.
-  })
-
-  T.post('favorites/destroy', {id : likeBody.tweetId}, function(err, data, response1) {
-    console.log(data)
-    if (err) {
-      // console.log(tweet);
-      response.send({status : 500})
-    }
-    io.emit('tweet_event')
-    response.send({status : 200, data : data})
-  })
-})
-
-app.post('/service/update/whatsapp_details', function(request, response1) {
-  var waDetails = request.body
-  if(waDetails.service_provider == 'Karix') {
-    var options = {
-      method: 'GET',
-      url: 'https://api.karix.io/whatsapp/profile/business/46762423331',
-      headers: {
-        Authorization: 'Basic MTZhOWI3YzktMWRkMi00MGEwLThhNGUtZTQwYTdkMzUxZDVjOjcyZTRhY2MyLTFiMzUtNGMxOC05OTMyLWZhMjZiZjY0ZTIyYQ==',
-        "Content-Type": "application/json"
-      }
-    };
-    
-    axios.request(options).then(function (response) {
-      console.log('SUCCESS1');    
-      // response1.send(response.data)
-      var waDetailsObj = response.data.data
-      var websitesData = waDetailsObj.websites
-
-      if(waDetails.websites) {
-        waDetails.websites = [waDetails.websites]
-      } else {
-        waDetails.websites = websitesData
-      }
-
-      delete waDetails.client
-      delete waDetails.service_provider
-      
-      var options = {
-        method: 'PATCH',
-        url: 'https://api.karix.io/whatsapp/profile/business/46762423331',
-        headers: {
-          Authorization: 'Basic MTZhOWI3YzktMWRkMi00MGEwLThhNGUtZTQwYTdkMzUxZDVjOjcyZTRhY2MyLTFiMzUtNGMxOC05OTMyLWZhMjZiZjY0ZTIyYQ==',
-          "Content-Type": "application/json"
-        },
-        data: waDetails
-      };
-      
-      axios.request(options).then(function (response2) {
-        console.log('SUCCESS2');    
-        response1.send(response2.data)
-        
-      }).catch(function (error) {
-        console.error(error);
-        response1.send(error)
-      });
-
-    }).catch(function (error) {
-      console.error(error);
-      response1.send(error)
-    });
-  }
-})
-
-// T.get('https://ton.twitter.com/1.1/ton/data/dm/1034828552951160836/1034828533812486145/oP5p359h.jpg', function(err,data,response) {
-//   console.log(data)
-//   console.log(err)
-// })
 
 server.listen(PORT, function() {
     console.log("Server is running on Port: " + PORT);
